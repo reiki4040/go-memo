@@ -1,5 +1,4 @@
 #!/bin/bash
-cd /go/src/github.com/reiki4040/go-memo/build_with_docker
 glide up
 
 VERSION=0.1.0
