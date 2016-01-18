@@ -10,8 +10,9 @@ ENV GO15VENDOREXPERIMENT 1
 RUN go get github.com/Masterminds/glide
 RUN go get github.com/mitchellh/gox
 
-RUN mkdir -p /go/src/github.com/reiki4040
-RUN git clone https://github.com/reiki4040/go-memo.git /go/src/github.com/reiki4040/go-memo
+WORKDIR /go/src/github.com/reiki4040
+RUN git clone https://github.com/reiki4040/go-memo.git
 
-RUN cd /go/src/github.com/reiki4040/go-memo; git checkout -b feature/build_with_docer origin/feature/build_with_docer
+WORKDIR go-memo
+RUN git checkout -b feature/build_with_docer origin/feature/build_with_docer
 
