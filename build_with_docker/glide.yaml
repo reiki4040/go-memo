@@ -1,0 +1,5 @@
+package: github.com/reiki4040/go-memo/build_with_docker
+import:
+  - package: github.com/reiki4040/cstore
+    vcs: git
+
