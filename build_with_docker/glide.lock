@@ -1,11 +1,11 @@
 hash: 62514a3511d20a87133a253e5acbb96ed97263a64a8c9c56fc16ed32ed3556d3
-updated: 2016-01-27T21:47:08.378231443+09:00
+updated: 2016-04-12T22:00:51.771263776+09:00
 imports:
 - name: github.com/BurntSushi/toml
-  version: 5c4df71dfe9ac89ef6287afc05e4c1b16ae65a1e
+  version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
 - name: github.com/reiki4040/cstore
   version: 3a1ef96c2022baf3c870e97670f8bb392929d935
   vcs: git
 - name: gopkg.in/yaml.v2
-  version: f7716cbe52baa25d2e9b0d0da546fcf909fc16b4
+  version: a83829b6f1293c91addabc89d0571c246397bbf4
 devImports: []
