@@ -15,7 +15,7 @@ import (
 type server struct{}
 
 func (s *server) GetAddress(ctx context.Context, in *pb.GeocoderRequest) (*pb.GeocoderReply, error) {
-	result := fmt.Sprintf("%d, %d -> %s", in.Lat, in.Lon, "geocoding result dummy")
+	result := fmt.Sprintf("%f, %f -> %s", in.Lat, in.Lon, "geocoding result dummy")
 	return &pb.GeocoderReply{Address: result}, nil
 }
 

@@ -18,7 +18,7 @@ func main() {
 
 	c := pb.NewGeocoderClient(conn)
 
-	r, err := c.GetAddress(context.Background(), &pb.GeocoderRequest{Lat: 35, Lon: 139})
+	r, err := c.GetAddress(context.Background(), &pb.GeocoderRequest{Lat: 35.662314, Lon: 139.702038})
 	if err != nil {
 		errc := grpc.Code(err)
 		log.Printf("error code: %d", errc)
@@ -26,7 +26,7 @@ func main() {
 	}
 	log.Printf("Geocoder result: %s", r.Address)
 
-	r, err = c.GetAddressError(context.Background(), &pb.GeocoderRequest{Lat: 35, Lon: 139})
+	r, err = c.GetAddressError(context.Background(), &pb.GeocoderRequest{Lat: 35.662314, Lon: 139.702038})
 	if err != nil {
 		errc := grpc.Code(err)
 		log.Printf("error code: %d", errc)
