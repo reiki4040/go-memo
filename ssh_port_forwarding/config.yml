@@ -1,0 +1,6 @@
+name: test vagrant
+ssh_bastion_host_port: "localhost:2222"
+ssh_user: vagrant
+ssh_key_file_path: <YOUR ENV PRIVATE KEY FILE PATH>
+local_bind_port: "localhost:8080"
+forwarding_remote_port: "192.168.50.6:80"
