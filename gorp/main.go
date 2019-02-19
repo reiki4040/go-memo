@@ -46,9 +46,13 @@ func main() {
 
 	dbmap.Insert(ec2list...)
 
-	list, _ := dbmap.Select(EC2{}, "select * from ec2")
-	for _, l := range list {
-		ec2 := l.(*EC2)
-		fmt.Printf("%d, %s, %s\n", ec2.Id, ec2.SKU, ec2.Type)
+	records := make([]EC2, 0)
+	_, err = dbmap.Select(&records, "select * from ec2")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, record := range records {
+		fmt.Printf("%d, %s, %s\n", record.Id, record.SKU, record.Type)
 	}
 }
