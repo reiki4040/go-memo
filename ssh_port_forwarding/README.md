@@ -2,6 +2,8 @@
 
 example SSH port forwarding in Go.
 
+**Many code changed about connection handling. see https://github.com/reiki4040/mogura**
+
 ## do it
 
 bastion and http server host starting...
