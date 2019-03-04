@@ -72,34 +72,38 @@ func (c *PortForwardingConfig) DoBinding() {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
+	sshClientConn, err := ssh.Dial("tcp", c.SSHBastionHostPort, sshConfig)
+	if err != nil {
+		fmt.Println("ssh.Dial failed: %s", err)
+		return
+	}
+
 	// Setup localListener (type net.Listener)
 	localListener, err := net.Listen("tcp", c.LocalBindPort)
 	if err != nil {
 		fmt.Println("net.Listen failed: %v", err)
-	} else {
-		// go accept loop
-		go func() {
-			for {
-				// Setup localConn (type net.Conn)
-				localConn, err := localListener.Accept()
-				if err != nil {
-					fmt.Println("listen.Accept failed: %v", err)
-					// maybe reconnection.
-				}
-
-				// go forwarding
-				go forward(localConn, c.SSHBastionHostPort, c.ForwardingRemotePort, sshConfig)
-			}
-		}()
+		return
 	}
+
+	// go accept loop
+	go func() {
+		defer localListener.Close()
+		defer sshClientConn.Close()
+		for {
+			// Setup localConn (type net.Conn)
+			localConn, err := localListener.Accept()
+			if err != nil {
+				fmt.Println("listen.Accept failed: %v", err)
+				// maybe reconnection.
+			}
+
+			// go forwarding
+			go forward(localConn, sshClientConn, c.ForwardingRemotePort, sshConfig)
+		}
+	}()
 }
 
-func forward(localConn net.Conn, hostport, remoteport string, config *ssh.ClientConfig) {
-	// Setup sshClientConn (type *ssh.ClientConn)
-	sshClientConn, err := ssh.Dial("tcp", hostport, config)
-	if err != nil {
-		fmt.Println("ssh.Dial failed: %s", err)
-	}
+func forward(localConn net.Conn, sshClientConn *ssh.Client, remoteport string, config *ssh.ClientConfig) {
 	// Setup sshConn (type net.Conn)
 	sshConn, err := sshClientConn.Dial("tcp", remoteport)
 	// Copy localConn.Reader to sshConn.Writer
