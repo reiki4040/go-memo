@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/casbin/casbin/v2"
-	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
