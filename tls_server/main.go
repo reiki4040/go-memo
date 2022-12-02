@@ -45,7 +45,7 @@ func main() {
 		close(waitGraceful)
 	}()
 
-	if err := s.ListenAndServe(); err != nil {
+	if err := s.ListenAndServeTLS("./cert.pem", "./cert-key.pem"); err != nil {
 		log.Print(err)
 	}
 
