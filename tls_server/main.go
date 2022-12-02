@@ -3,18 +3,35 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"go.uber.org/zap"
+)
+
+const (
+	EnvLogModeDev = "SERVER_LOG_MODE"
 )
 
 func main() {
+	var logger *zap.Logger
+	var err error
+	if os.Getenv(EnvLogModeDev) == "development" {
+		logger, err = zap.NewDevelopment()
+	} else {
+		logger, err = zap.NewProduction()
+	}
+	if err != nil {
+		panic(err)
+	}
+
 	mux, err := NewServeMux()
 	if err != nil {
-		log.Fatalf("failed initialize ServeMux: %v", err)
+		logger.Error("failed initialize ServeMux", zap.Error(err))
+		return
 	}
 
 	s := &http.Server{
@@ -31,23 +48,25 @@ func main() {
 	waitGraceful := make(chan struct{})
 	go func() {
 		<-signalCtx.Done()
-		log.Print("got signal. server will do graceful shutdown...")
+		logger.Info("got signal. server will do graceful shutdown...")
 		ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancelFunc()
 		if err := s.Shutdown(ctx); err != nil {
 			if errors.Is(err, context.DeadlineExceeded) {
-				log.Printf("failed graceful shutdown with timeout %v passed", time.Duration(5*time.Second))
+				logger.Warn("failed graceful shutdown with timeout passed",
+					zap.Duration("timeout", time.Duration(5*time.Second)),
+				)
 			} else {
-				log.Printf("failed graceful shutdown: %v", err)
+				logger.Error("failed graceful shutdown", zap.Error(err))
 			}
 		} else {
-			log.Print("OK. Server is shotdown normaly.")
+			logger.Info("OK. Server is shotdown normaly.")
 		}
 		close(waitGraceful)
 	}()
 
 	if err := s.ListenAndServeTLS("./cert.pem", "./cert-key.pem"); err != nil {
-		log.Print(err)
+		logger.Error("ListenAndServer returns error", zap.Error(err))
 	}
 
 	/*
