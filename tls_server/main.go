@@ -18,8 +18,9 @@ func main() {
 	}
 
 	s := &http.Server{
-		Addr:    ":8080",
-		Handler: mux,
+		Addr:        ":8080",
+		Handler:     mux,
+		ReadTimeout: 5 * time.Second,
 	}
 
 	// signal handling
