@@ -28,6 +28,8 @@ const (
 
 func main() {
 	c := zap.NewProductionConfig()
+	// disable sampling https://github.com/uber-go/zap/issues/588
+	c.Sampling = nil
 	c.Development = (strings.ToLower(os.Getenv(EnvLogMode)) == EnvLogModeValueDev)
 	switch strings.ToLower(os.Getenv(EnvLogLevel)) {
 	case EnvLogLevelValueDebug:
