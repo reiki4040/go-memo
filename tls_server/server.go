@@ -42,7 +42,7 @@ func (l *Logging) RequestLogging(h http.Handler) http.Handler {
 		h.ServeHTTP(w, req.WithContext(ctx))
 		responseTime := time.Since(start)
 
-		l.logger.Info("request log",
+		l.logger.Named("request_log").Info("request log",
 			zap.Time("request_time", start),
 			zap.String("remote_addr", req.RemoteAddr),
 			zap.String("host", req.Host),

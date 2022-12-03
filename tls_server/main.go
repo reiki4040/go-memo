@@ -38,10 +38,11 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("failed initialize logger: %v", err))
 	}
+	mLogger := logger.Named("main")
 
-	mux, err := NewServeMux(logger)
+	mux, err := NewServeMux(logger.Named("servemux"))
 	if err != nil {
-		logger.Error("failed initialize ServeMux", zap.Error(err))
+		mLogger.Error("failed initialize ServeMux", zap.Error(err))
 		return
 	}
 
@@ -77,7 +78,7 @@ func main() {
 	}()
 
 	if err := s.ListenAndServeTLS("./cert.pem", "./cert-key.pem"); err != nil {
-		logger.Error("ListenAndServer returns error", zap.Error(err))
+		mLogger.Error("ListenAndServer returns error", zap.Error(err))
 	}
 
 	/*
