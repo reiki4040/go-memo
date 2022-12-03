@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -11,9 +12,16 @@ import (
 
 func NewServeMux() (*http.ServeMux, error) {
 	mux := http.NewServeMux()
-	mux.Handle("/", reqLog(middle(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	mux.Handle("/", reqLog(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		l, err := getLoggerFromContext(req.Context())
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		l.Debug("call /")
 		w.Write([]byte("Hello world"))
-	}))))
+	})))
 	mux.Handle("/sleep15", reqLog(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		time.Sleep(15 * time.Second)
 		w.Write([]byte("wake up. I was sleeping until 15 seconds."))
@@ -22,31 +30,18 @@ func NewServeMux() (*http.ServeMux, error) {
 	return mux, nil
 }
 
-func middle(h http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, req *http.Request) {
-		auth := req.Header.Get("authorization")
-		// とりあえずヘッダの有無だけ
-		if auth == "" {
-			http.Error(w, "Unauthorize request", http.StatusUnauthorized)
-			return
-		}
-		h.ServeHTTP(w, req)
-	}
-
-	return http.HandlerFunc(fn)
-}
-
 type ReqContextLogger struct{}
 
 func reqLog(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, req *http.Request) {
 		c := zap.NewProductionConfig()
+		c.Level.SetLevel(zapcore.DebugLevel)
 		c.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
 		l, _ := c.Build()
 
-		_ = context.WithValue(req.Context(), ReqContextLogger{}, l)
+		ctx := context.WithValue(req.Context(), ReqContextLogger{}, l)
 		start := time.Now()
-		h.ServeHTTP(w, req)
+		h.ServeHTTP(w, req.WithContext(ctx))
 		responseTime := time.Since(start)
 
 		l.Info("request log",
@@ -64,4 +59,14 @@ func reqLog(h http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(fn)
+}
+
+func getLoggerFromContext(ctx context.Context) (*zap.Logger, error) {
+	lv := ctx.Value(ReqContextLogger{})
+	l, ok := lv.(*zap.Logger)
+	if !ok {
+		return nil, fmt.Errorf("does not set logger in request context, please chack middleware")
+	}
+
+	return l, nil
 }
