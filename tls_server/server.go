@@ -16,20 +16,9 @@ func NewServeMux(l *zap.Logger) (*http.ServeMux, error) {
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("/", logging.RequestLogging(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		l, err := GetLoggerFromContext(req.Context())
-		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-
-		l.Debug("call /")
-		w.Write([]byte("Hello world"))
-	})))
-	mux.Handle("/sleep15", logging.RequestLogging(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		time.Sleep(15 * time.Second)
-		w.Write([]byte("wake up. I was sleeping until 15 seconds."))
-	})))
+	api := &API{}
+	mux.Handle("/", logging.RequestLogging(http.HandlerFunc(api.HelloWorld)))
+	mux.Handle("/sleep15", logging.RequestLogging(http.HandlerFunc(api.Sleep)))
 
 	return mux, nil
 }
@@ -78,4 +67,22 @@ func GetLoggerFromContext(ctx context.Context) (*zap.Logger, error) {
 	}
 
 	return l, nil
+}
+
+type API struct{}
+
+func (api *API) HelloWorld(w http.ResponseWriter, req *http.Request) {
+	l, err := GetLoggerFromContext(req.Context())
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write([]byte("Hello world"))
+	l.Debug("called hello world")
+}
+
+func (api *API) Sleep(w http.ResponseWriter, req *http.Request) {
+	time.Sleep(15 * time.Second)
+	w.Write([]byte("wake up. I was sleeping until 15 seconds."))
 }
