@@ -16,20 +16,28 @@ import (
 )
 
 const (
-	EnvLogModeDev  = "SERVER_LOG_MODE"
-	EnvLogLogLevel = "SERVER_LOG_LEVEL"
+	EnvLogMode         = "SERVER_LOG_MODE"
+	EnvLogModeValueDev = "developement"
+
+	EnvLogLevel           = "SERVER_LOG_LEVEL"
+	EnvLogLevelValueDebug = "debug"
+	EnvLogLevelValueInfo  = "info"
+	EnvLogLevelValueWarn  = "warn"
+	EnvLogLevelValueError = "error"
 )
 
 func main() {
 	c := zap.NewProductionConfig()
-	c.Development = (strings.ToLower(os.Getenv(EnvLogModeDev)) == "development")
-	switch strings.ToLower(os.Getenv(EnvLogLogLevel)) {
-	case "debug":
+	c.Development = (strings.ToLower(os.Getenv(EnvLogMode)) == EnvLogModeValueDev)
+	switch strings.ToLower(os.Getenv(EnvLogLevel)) {
+	case EnvLogLevelValueDebug:
 		c.Level.SetLevel(zapcore.DebugLevel)
-	case "warn":
+	case EnvLogLevelValueWarn:
 		c.Level.SetLevel(zapcore.WarnLevel)
-	case "error":
+	case EnvLogLevelValueError:
 		c.Level.SetLevel(zapcore.ErrorLevel)
+	case EnvLogLevelValueInfo:
+		// none (=Info)
 	default:
 		// none (=Info)
 	}
