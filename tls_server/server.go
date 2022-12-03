@@ -7,13 +7,17 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
-func NewServeMux() (*http.ServeMux, error) {
+func NewServeMux(l *zap.Logger) (*http.ServeMux, error) {
+	logging, err := NewLoggingWith(l)
+	if err != nil {
+		l.Error("failed logging middleware", zap.Error(err))
+	}
+
 	mux := http.NewServeMux()
-	mux.Handle("/", reqLog(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		l, err := getLoggerFromContext(req.Context())
+	mux.Handle("/", logging.RequestLogging(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		l, err := GetLoggerFromContext(req.Context())
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
@@ -22,7 +26,7 @@ func NewServeMux() (*http.ServeMux, error) {
 		l.Debug("call /")
 		w.Write([]byte("Hello world"))
 	})))
-	mux.Handle("/sleep15", reqLog(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	mux.Handle("/sleep15", logging.RequestLogging(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		time.Sleep(15 * time.Second)
 		w.Write([]byte("wake up. I was sleeping until 15 seconds."))
 	})))
@@ -32,19 +36,24 @@ func NewServeMux() (*http.ServeMux, error) {
 
 type ReqContextLogger struct{}
 
-func reqLog(h http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, req *http.Request) {
-		c := zap.NewProductionConfig()
-		c.Level.SetLevel(zapcore.DebugLevel)
-		c.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
-		l, _ := c.Build()
+func NewLoggingWith(l *zap.Logger) (*Logging, error) {
+	return &Logging{
+		logger: l,
+	}, nil
+}
 
-		ctx := context.WithValue(req.Context(), ReqContextLogger{}, l)
+type Logging struct {
+	logger *zap.Logger
+}
+
+func (l *Logging) RequestLogging(h http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := context.WithValue(req.Context(), ReqContextLogger{}, l.logger)
 		start := time.Now()
 		h.ServeHTTP(w, req.WithContext(ctx))
 		responseTime := time.Since(start)
 
-		l.Info("request log",
+		l.logger.Info("request log",
 			zap.Time("request_time", start),
 			zap.String("remote_addr", req.RemoteAddr),
 			zap.String("host", req.Host),
@@ -61,7 +70,7 @@ func reqLog(h http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-func getLoggerFromContext(ctx context.Context) (*zap.Logger, error) {
+func GetLoggerFromContext(ctx context.Context) (*zap.Logger, error) {
 	lv := ctx.Value(ReqContextLogger{})
 	l, ok := lv.(*zap.Logger)
 	if !ok {

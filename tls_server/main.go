@@ -3,32 +3,43 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
-	EnvLogModeDev = "SERVER_LOG_MODE"
+	EnvLogModeDev  = "SERVER_LOG_MODE"
+	EnvLogLogLevel = "SERVER_LOG_LEVEL"
 )
 
 func main() {
-	var logger *zap.Logger
-	var err error
-	if os.Getenv(EnvLogModeDev) == "development" {
-		logger, err = zap.NewDevelopment()
-	} else {
-		logger, err = zap.NewProduction()
+	c := zap.NewProductionConfig()
+	c.Development = (strings.ToLower(os.Getenv(EnvLogModeDev)) == "development")
+	switch strings.ToLower(os.Getenv(EnvLogLogLevel)) {
+	case "debug":
+		c.Level.SetLevel(zapcore.DebugLevel)
+	case "warn":
+		c.Level.SetLevel(zapcore.WarnLevel)
+	case "error":
+		c.Level.SetLevel(zapcore.ErrorLevel)
+	default:
+		// none (=Info)
 	}
+	c.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
+	logger, err := c.Build()
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("failed initialize logger: %v", err))
 	}
 
-	mux, err := NewServeMux()
+	mux, err := NewServeMux(logger)
 	if err != nil {
 		logger.Error("failed initialize ServeMux", zap.Error(err))
 		return
