@@ -86,7 +86,11 @@ func main() {
 	}()
 
 	if err := s.ListenAndServeTLS("./cert.pem", "./cert-key.pem"); err != nil {
-		mLogger.Error("ListenAndServer returns error", zap.Error(err))
+		if errors.Is(http.ErrServerClosed, err) {
+			mLogger.Warn("got server closed maybe got signal that stop process", zap.Error(err))
+		} else {
+			mLogger.Error("got error from ListenAndServer() that is NOT server closed", zap.Error(err))
+		}
 	}
 
 	/*
