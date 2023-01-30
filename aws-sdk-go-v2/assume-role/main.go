@@ -51,7 +51,7 @@ func main() {
 				o.TokenProvider = stscreds.StdinTokenProvider
 			})
 		} else {
-			provider = stscreds.NewAssumeRoleProvider(stsClient, optRoleArn, nil)
+			provider = stscreds.NewAssumeRoleProvider(stsClient, optRoleArn)
 		}
 		cfg.Credentials = aws.NewCredentialsCache(provider)
 	}
