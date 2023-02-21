@@ -1,0 +1,8 @@
+go 1.19
+
+use (
+	./aws-sdk-go-v2/assume-role
+	./casbin
+	./signal_context
+	./tls_server
+)
